@@ -1,0 +1,7 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { pageHead } from '@/lib/games';
+export const Route = createFileRoute('/contact')({ head: () => pageHead('Contact', 'Share feedback on the AIR GAMES party gaming preview.'), component: Contact });
+function Contact() { const [saved, setSaved] = useState(false); return <section className="text-page page-width"><span className="eyebrow">GOT SOMETHING ON YOUR MIND?</span><h1>Say hello.</h1><p>We’d love to hear your ideas. Message delivery is not connected in this preview; you can prepare and download your message below.</p><form className="contact-form" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const url = URL.createObjectURL(new Blob([`Name: ${data.get('name')}\nEmail: ${data.get('email')}\n\n${data.get('message')}`], { type: 'text/plain' })); const link = document.createElement('a'); link.href = url; link.download = 'air-games-feedback.txt'; link.click(); URL.revokeObjectURL(url); setSaved(true); }}><label>Your name<Input name="name" required maxLength={60} /></label><label>Email<Input name="email" type="email" required /></label><label>Message<textarea name="message" required rows={5} maxLength={3000} /></label><Button variant="gaming" type="submit">Download message</Button>{saved && <p role="status">Your message has been downloaded, not sent.</p>}</form></section>; }

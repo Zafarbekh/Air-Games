@@ -1,0 +1,5 @@
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
+import { pageHead } from '@/lib/games';
+export const Route = createFileRoute('/about')({ head: () => pageHead('About', 'AIR GAMES is an independent free party gaming platform made for playing together.'), component: About });
+function About() { return <section className="text-page page-width"><span className="eyebrow">MADE FOR THE WHOLE COUCH</span><h1>More play.<br />Less in the way.</h1><p>AIR GAMES is an original, independent party gaming platform. One big screen, a phone for every player, and a little friendly rivalry. No consoles to buy. No games to download. Completely free.</p><h2>Four games. One great night.</h2><p>Snake Battle, Quiz Battle, Bomb Arena, and Mini Racing bring different kinds of competition to your gathering.</p><div className="info-note"><h3>Where we are today</h3><p>This preview demonstrates the game library, local room flow, and touch controller. Network multiplayer and fully playable game engines are not connected.</p></div><Button variant="gaming" asChild><Link to="/games">Explore the games</Link></Button></section>; }

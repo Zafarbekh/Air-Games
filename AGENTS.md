@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Application architecture
+- Keep room state behind a typed in-memory transport interface and context; this frontend demonstration must not imply network multiplayer or persist simulated rooms.
+- Keep game definitions shared and canvas previews separate from routes so a future game engine and multiplayer transport can replace the demonstrations independently.
