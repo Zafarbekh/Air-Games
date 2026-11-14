@@ -1,15 +1,225 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Check, Copy, QrCode, Users, Play, FlaskConical, ArrowLeft } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  QrCode,
+  Users,
+  Play,
+  ArrowLeft,
+} from 'lucide-react';
+
 import { useRoom } from '@/components/room-provider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { GamePreview } from '@/components/game-preview';
 import { getGame, pageHead } from '@/lib/games';
-export const Route = createFileRoute('/room')({ head: () => pageHead('Party room', 'Set up a local AIR GAMES party room, manage players, and preview a game.'), component: RoomPage });
+
+export const Route = createFileRoute('/room')({
+  head: () =>
+    pageHead(
+      'Party room',
+      'Manage your AIR GAMES multiplayer room.'
+    ),
+  component: RoomPage,
+});
+
 function RoomPage() {
-  const { room, join, ready, start, leave } = useRoom(); const [name, setName] = useState(''); const [error, setError] = useState(''); const [copied, setCopied] = useState(false); const [loading, setLoading] = useState(false);
-  if (!room) return <section className="empty-state room-page"><Users size={40} /><h2>No party room yet.</h2><p>Pick a game to create your local room.</p><Button variant="gaming" asChild><Link to="/games">Explore games</Link></Button></section>;
-  const game = getGame(room.gameId); const canStart = room.players.length >= game.min && room.players.every(p => p.ready);
-  return <section className="room-page page-width"><div className="room-heading"><h1>{room.started ? 'Let the preview begin.' : 'Your party starts here.'}</h1><span className="demo-label"><FlaskConical size={15} />Local demo</span></div><div className="room-layout"><div className="room-game"><img className="room-cover" src={game.image} alt={game.name} width={1024} height={640} /><h2>{game.name}</h2><p>{game.description}</p><p><Users size={14} className="inline" /> {game.min}–{game.max} players · {game.category}</p>{room.started && <GamePreview gameId={room.gameId} />}<p className="demo-note">Local preview only. No devices are connected, and game engines are not yet playable. Room data clears on refresh.</p></div><div><div className="room-code-panel"><div><span className="eyebrow">YOUR ROOM CODE</span><div className="room-code">{room.code}</div><Button variant="ghost" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(room.code); setCopied(true); setError(''); } catch { setError('Copy is unavailable. Select the room code above to copy it.'); } }}>{copied ? <Check /> : <Copy />}{copied ? 'Copied!' : 'Copy code'}</Button></div><div className="qr-placeholder" aria-label="QR code placeholder, not scannable"><QrCode /><small>QR coming soon</small></div></div><div className="lobby-title"><h2>Player lobby</h2><span>{room.players.length} / {game.max} players</span></div>{room.players.map((p, i) => <div key={p.id} className="player-row"><div className="player-info"><span className="player-avatar">{p.name[0]?.toUpperCase()}</span><span>{p.name}{i === 0 ? ' · Host' : ''}</span></div><Button disabled={room.started} variant="ghost" size="sm" className={p.ready ? 'ready-text' : ''} onClick={() => ready(p.id)}>{p.ready && <Check />}{p.ready ? 'Ready' : 'Not ready'}</Button></div>)}<div className="room-controls">{!room.started && <><form className="inline-form" onSubmit={e => { e.preventDefault(); try { join(room.code, name); setName(''); setError(''); } catch (e) { setError(e instanceof Error ? e.message : 'Unable to add player'); } }}><Input aria-label="Demo player name" placeholder="Demo player name" value={name} maxLength={24} onChange={e => setName(e.target.value)} /><Button variant="outline" disabled={room.players.length >= game.max} type="submit">Add player</Button></form><Button variant="gaming" size="lg" disabled={!canStart || loading} onClick={() => { setLoading(true); setTimeout(() => { try { start(); setError(''); } catch (e) { setError(e instanceof Error ? e.message : 'Unable to start'); } setLoading(false); }, 450); }}><Play />{loading ? 'Starting preview…' : 'Start game preview'}</Button><Button variant="outline" asChild><Link to="/controller">Open phone controller</Link></Button></>}{error && <p className="error-message" role="alert">{error}</p>}<Button variant="ghost" onClick={leave}><ArrowLeft />Close room</Button></div><p className="demo-note">Add local demo players, then mark everyone ready. For this preview, a controller can join only from this same tab.</p></div></div></section>;
+  const { room, session, start, leave } = useRoom();
+
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  if (!room) {
+    return (
+      <section className="empty-state room-page">
+        <Users size={40} />
+        <h2>No party room yet.</h2>
+        <p>Pick a game to create your room.</p>
+        <Button variant="gaming" asChild>
+          <Link to="/games">Explore games</Link>
+        </Button>
+      </section>
+    );
+  }
+
+  const game = getGame(room.gameId);
+  const isHost = session?.playerId === room.hostPlayerId;
+  const isPlaying = room.status === 'playing';
+
+  const canStart =
+    isHost &&
+    !isPlaying &&
+    room.players.length >= game.min &&
+    room.players.every(player => player.ready);
+
+  async function handleStart() {
+    try {
+      setLoading(true);
+      setError('');
+      await start();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Unable to start game.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCopy() {
+  if (!room) return;
+
+  try {
+    await navigator.clipboard.writeText(room.code);
+    setCopied(true);
+    setError('');
+  } catch {
+    setError('Copy failed. You can select the room code manually.');
+  }
+}
+
+  return (
+    <section className="room-page page-width">
+      <div className="room-heading">
+        <h1>
+          {isPlaying ? 'Game is starting!' : 'Your party starts here.'}
+        </h1>
+        <span className="demo-label">
+          <Users size={15} />
+          Online room
+        </span>
+      </div>
+
+      <div className="room-layout">
+        <div className="room-game">
+          <img
+            className="room-cover"
+            src={game.image}
+            alt={game.name}
+            width={1024}
+            height={640}
+          />
+
+          <h2>{game.name}</h2>
+          <p>{game.description}</p>
+
+          <p>
+            <Users size={14} className="inline" />
+            {' '}
+            {game.min}–{game.max} players · {game.category}
+          </p>
+
+          {isPlaying && <GamePreview gameId={room.gameId} />}
+
+          <p className="demo-note">
+            Players connect using the room code on their phones.
+          </p>
+        </div>
+
+        <div>
+          <div className="room-code-panel">
+            <div>
+              <span className="eyebrow">YOUR ROOM CODE</span>
+              <div className="room-code">{room.code}</div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+              >
+                {copied ? <Check /> : <Copy />}
+                {copied ? 'Copied!' : 'Copy code'}
+              </Button>
+            </div>
+
+            <div
+              className="qr-placeholder"
+              aria-label="QR code coming soon"
+            >
+              <QrCode />
+              <small>QR coming soon</small>
+            </div>
+          </div>
+
+          <div className="lobby-title">
+            <h2>Player lobby</h2>
+            <span>
+              {room.players.length} / {game.max} players
+            </span>
+          </div>
+
+          {room.players.map(player => (
+            <div key={player.id} className="player-row">
+              <div className="player-info">
+                <span className="player-avatar">
+                  {player.name[0]?.toUpperCase()}
+                </span>
+
+                <span>
+                  {player.name}
+                  {player.isHost ? ' · Host' : ''}
+                </span>
+              </div>
+
+              <span
+                className={player.ready ? 'ready-text' : ''}
+              >
+                {player.ready ? (
+                  <>
+                    <Check size={14} className="inline" /> Ready
+                  </>
+                ) : (
+                  'Not ready'
+                )}
+              </span>
+            </div>
+          ))}
+
+          <div className="room-controls">
+            {!isPlaying && isHost && (
+              <Button
+                variant="gaming"
+                size="lg"
+                disabled={!canStart || loading}
+                onClick={handleStart}
+              >
+                <Play />
+                {loading ? 'Starting...' : 'Start game'}
+              </Button>
+            )}
+
+            {!isPlaying && !isHost && (
+              <p className="demo-note">
+                Waiting for the host to start the game.
+                Mark yourself Ready on your phone controller.
+              </p>
+            )}
+
+            <Button variant="outline" asChild>
+              <Link to="/controller">Open phone controller</Link>
+            </Button>
+
+            {error && (
+              <p className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+
+            <Button
+              variant="ghost"
+              onClick={() => void leave()}
+            >
+              <ArrowLeft />
+              Exit room
+            </Button>
+          </div>
+
+          <p className="demo-note">
+            Room members and readiness are synchronized through the server.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
 }
