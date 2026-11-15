@@ -126,6 +126,19 @@ export type Database = {
         Args: { p_code: string; p_player_id: string; p_token: string }
         Returns: Json
       }
+      create_room: {
+        Args: { p_game_id: string; p_name: string }
+        Returns: Json
+      }
+      get_room: { Args: { p_code: string }; Returns: Json }
+      join_room: {
+        Args: { p_capacity?: number; p_code: string; p_name: string }
+        Returns: Json
+      }
+      set_ready: {
+        Args: { p_player_id: string; p_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
