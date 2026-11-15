@@ -37,7 +37,7 @@ const inputFor = (inputs: Record<string, ControllerInput>, id: string) => inputs
 function createSnake(players: PlayerDescriptor[]): SnakeState {
   const starts = [{ x: 5, y: 4, direction: 'right' as const }, { x: 26, y: 15, direction: 'left' as const }, { x: 5, y: 15, direction: 'right' as const }, { x: 26, y: 4, direction: 'left' as const }];
   const state: SnakeState = { ...base('snake'), gameId: 'snake', players: players.map((player, index) => {
-    const start = starts[index]; const vector = vectors[start.direction];
+    const start = starts[index] ?? starts[0]!; const vector = vectors[start.direction];
     return { id: player.id, x: start.x, y: start.y, direction: start.direction, queued: start.direction, alive: true, score: 0, body: Array.from({ length: 4 }, (_, part) => ({ x: start.x - vector.x * part, y: start.y - vector.y * part })) };
   }), food: { x: 15, y: 10 }, seed: 8731, accumulator: 0 };
   return state;
@@ -59,7 +59,7 @@ function stepSnake(state: SnakeState, inputs: Record<string, ControllerInput>) {
     const requested = inputFor(inputs, player.id).direction;
     if (requested && requested !== opposite[player.direction]) player.queued = requested;
     player.direction = player.queued;
-    const head = player.body[0]; const vector = vectors[player.direction];
+    const head = player.body[0]!; const vector = vectors[player.direction];
     nextHeads.set(player.id, { x: head.x + vector.x, y: head.y + vector.y });
   }
   for (const player of state.players) {
@@ -86,7 +86,7 @@ export function answerQuiz(state: GameState, playerId: string, answer: number) {
   if (state.gameId !== 'quiz' || state.phase !== 'question' || answer < 0 || answer > 3 || state.answers[playerId] !== undefined) return;
   state.answers[playerId] = answer;
   state.answeredAt[playerId] = state.elapsed;
-  if (answer === QUIZ_QUESTIONS[state.questionIndex].correct) state.scores[playerId] = (state.scores[playerId] ?? 0) + Math.max(100, 1000 - Math.floor(state.elapsed * 50));
+  if (answer === (QUIZ_QUESTIONS[state.questionIndex] ?? QUIZ_QUESTIONS[0]!).correct) state.scores[playerId] = (state.scores[playerId] ?? 0) + Math.max(100, 1000 - Math.floor(state.elapsed * 50));
 }
 
 function tickQuiz(state: QuizState, dt: number) {
@@ -108,12 +108,12 @@ function tickQuiz(state: QuizState, dt: number) {
 function createBomb(players: PlayerDescriptor[]): BombState {
   const grid = Array.from({ length: 11 }, (_, y) => Array.from({ length: 15 }, (_, x) => x === 0 || y === 0 || x === 14 || y === 10 || (x % 2 === 0 && y % 2 === 0) ? 1 : ((x * 7 + y * 11) % 5 < 2 ? 2 : 0)));
   const starts = [{ x: 1, y: 1 }, { x: 13, y: 9 }, { x: 1, y: 9 }, { x: 13, y: 1 }];
-  for (const start of starts) for (const point of [start, { x: start.x + (start.x === 1 ? 1 : -1), y: start.y }, { x: start.x, y: start.y + (start.y === 1 ? 1 : -1) }]) grid[point.y][point.x] = 0;
-  return { ...base('bomb'), gameId: 'bomb', players: players.map((player, index) => ({ id: player.id, ...starts[index], alive: true, bombs: 0 })), grid, bombs: [], explosions: [], accumulator: 0, elapsed: 0 };
+  for (const start of starts) for (const point of [start, { x: start.x + (start.x === 1 ? 1 : -1), y: start.y }, { x: start.x, y: start.y + (start.y === 1 ? 1 : -1) }]) grid[point.y]![point.x] = 0;
+  return { ...base('bomb'), gameId: 'bomb', players: players.map((player, index) => ({ id: player.id, ...(starts[index] ?? starts[0]!), alive: true, bombs: 0 })), grid, bombs: [], explosions: [], accumulator: 0, elapsed: 0 };
 }
 
 function bombOpen(state: BombState, x: number, y: number) {
-  return y >= 0 && y < 11 && x >= 0 && x < 15 && state.grid[y][x] === 0 && !state.bombs.some(bomb => bomb.x === x && bomb.y === y);
+  return y >= 0 && y < 11 && x >= 0 && x < 15 && state.grid[y]?.[x] === 0 && !state.bombs.some(bomb => bomb.x === x && bomb.y === y);
 }
 
 function stepBomb(state: BombState, inputs: Record<string, ControllerInput>) {
@@ -135,9 +135,9 @@ function explodeBomb(state: BombState, bomb: Bomb) {
   for (const direction of Object.values(vectors)) {
     for (let range = 1; range <= bomb.range; range++) {
       const x = bomb.x + direction.x * range; const y = bomb.y + direction.y * range;
-      if (x < 0 || x >= 15 || y < 0 || y >= 11 || state.grid[y][x] === 1) break;
+      if (x < 0 || x >= 15 || y < 0 || y >= 11 || state.grid[y]?.[x] === 1) break;
       cells.push({ x, y });
-      if (state.grid[y][x] === 2) { state.grid[y][x] = 0; break; }
+      if (state.grid[y]?.[x] === 2) { state.grid[y]![x] = 0; break; }
     }
   }
   for (const cell of cells) {

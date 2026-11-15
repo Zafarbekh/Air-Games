@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Gamepad2, ArrowUpRight, Smartphone, Menu, X, Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -9,7 +8,7 @@ export function Logo() {
   return (
     <Link to="/" className="brand" aria-label="AIR GAMES home">
       <span className="brand-mark"><Gamepad2 /></span>
-      AIR<span className="text-primary">GAMES</span>
+      <span className="brand-wordmark">AIR<span>GAMES</span></span>
     </Link>
   );
 }
@@ -58,13 +57,14 @@ export function Header() {
             variant="ghost"
             size="icon"
             aria-label="Toggle navigation"
+            aria-expanded={open}
             className="mobile-menu"
             onClick={() => setOpen(!open)}
           >
             {open ? <X /> : <Menu />}
           </Button>
         </div>
-        {error && <p className="error-message" role="alert">{error}</p>}
+        {error && <p className="error-message header-error" role="alert">{error}</p>}
       </div>
     </header>
   );
@@ -72,19 +72,41 @@ export function Header() {
 
 export function Footer() {
   return (
-    <footer className="site-footer page-width">
-      <div>
-        <Logo />
-        <p>Good friends. Great games. Zero cost.</p>
+    <footer className="site-footer">
+      <div className="page-width footer-main">
+        <div className="footer-brand">
+          <Logo />
+          <p>Good friends. Great games. Zero cost.</p>
+          <span><span className="live-dot" aria-hidden="true" /> BUILT FOR YOUR NEXT GAME NIGHT</span>
+        </div>
+
+        <div className="footer-column">
+          <strong>EXPLORE</strong>
+          <Link to="/games">All games</Link>
+          <Link to="/how-it-works">How it works</Link>
+          <Link to="/controller">Join a room</Link>
+        </div>
+
+        <div className="footer-column">
+          <strong>AIR GAMES</strong>
+          <Link to="/about">About us</Link>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/contact">Contact <ArrowUpRight size={13} /></Link>
+        </div>
+
+        <div className="footer-callout">
+          <span>READY WHEN YOU ARE</span>
+          <strong>One screen.<br />Endless possibilities.</strong>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/games">Choose your game <ArrowUpRight /></Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="footer-links">
-        <Link to="/about">About</Link>
-        <Link to="/privacy">Privacy</Link>
-        <Link to="/contact">Contact <ArrowUpRight size={13} /></Link>
+      <div className="page-width footer-bottom">
+        <span className="copyright">© 2026 AIR GAMES. ALL RIGHTS RESERVED.</span>
+        <span>ORIGINAL GAMES. SHARED MOMENTS.</span>
       </div>
-
-      <span className="copyright">© 2026 AIR GAMES</span>
     </footer>
   );
 }

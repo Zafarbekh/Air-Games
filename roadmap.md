@@ -1,9 +1,6 @@
-# AIR GAMES
-- [x] Build branded home, game library, and information pages.
-- [x] Build local room creation, joining, lobby readiness, and game preview.
-- [x] Build mobile controller with touch controls.
-- [x] Verify core flows, responsive layouts, and tests.
-- [ ] Replace same-tab room simulation with cross-device multiplayer rooms.
-- [ ] Turn Snake Battle, Quiz Battle, Bomb Arena, and Mini Racing into playable games.
-- [ ] Synchronize phone controls and game results across connected players.
-- [ ] Verify two-player flows, all game rules, builds, and mobile layouts.
+# AIR GAMES homepage upgrade
+- [ ] Rebuild the cinematic hero and homepage content while preserving every route and room action.
+- [ ] Upgrade reusable game cards, setup steps, benefits, header, and footer.
+- [ ] Add responsive premium styling, motion, and accessible interaction states.
+- [ ] Repair existing TypeScript errors without changing game or multiplayer rules.
+- [ ] Run tests and verify desktop, mobile, navigation, and room creation flows.

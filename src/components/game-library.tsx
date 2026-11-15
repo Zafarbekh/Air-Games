@@ -1,13 +1,12 @@
-
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, Users, ArrowUpRight, Gamepad2, X } from 'lucide-react';
+import { Search, Users, ArrowUpRight, Gamepad2, X, Play } from 'lucide-react';
 import { games, type Game } from '@/lib/games';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { useRoom } from './room-provider';
 
-export function GameCard({ game }: { game: Game }) {
+export function GameCard({ game, index = 0 }: { game: Game; index?: number }) {
   const { create } = useRoom();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -29,23 +28,39 @@ export function GameCard({ game }: { game: Game }) {
   return (
     <article className={`game-card tone-${game.tone}`}>
       <div className="game-art">
-        <img src={game.image} alt={`${game.name} original game artwork`} loading="lazy" width={1024} height={640} />
+        <img
+          src={game.image}
+          alt={`${game.name} original game artwork`}
+          loading="lazy"
+          decoding="async"
+          width={1024}
+          height={640}
+        />
+        <div className="game-art-shade" aria-hidden="true" />
         <span className="game-category">{game.category}</span>
         <span className="free-badge">FREE</span>
+        <span className="game-art-number" aria-hidden="true">0{index + 1}</span>
+        <span className="game-art-action" aria-hidden="true"><Play fill="currentColor" /></span>
       </div>
 
       <div className="game-card-body">
+        <span className="game-tagline">{game.tagline}</span>
         <div className="game-title-row">
           <h3>{game.name}</h3>
-          <ArrowUpRight size={18} />
+          <ArrowUpRight size={20} />
         </div>
 
         <p>{game.description}</p>
 
         <div className="game-card-bottom">
-          <span><Users size={14} />{game.min}–{game.max} players</span>
-          <Button variant="secondary" disabled={loading} onClick={play}>
-            {loading ? 'Creating...' : 'Play'} <ArrowUpRight />
+          <span><Users size={15} />{game.min}–{game.max} players</span>
+          <Button
+            variant="secondary"
+            disabled={loading}
+            onClick={play}
+            aria-label={`Play ${game.name}`}
+          >
+            {loading ? 'Creating...' : 'Play now'} <ArrowUpRight />
           </Button>
         </div>
 
@@ -60,35 +75,45 @@ export function GameLibrary({ compact = false }: { compact?: boolean }) {
   const [category, setCategory] = useState('All games');
 
   const filtered = games.filter(
-    g =>
-      (category === 'All games' || g.category === category) &&
-      `${g.name} ${g.description}`.toLowerCase().includes(search.toLowerCase())
+    game =>
+      (category === 'All games' || game.category === category) &&
+      `${game.name} ${game.description}`.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <section className="library-section page-width">
+    <section className={`library-section page-width${compact ? ' library-compact' : ''}`}>
       <div className="section-heading">
         <div>
-          <span className="eyebrow">PICK YOUR NEXT OBSESSION</span>
-          <h2>{compact ? 'The good times start here.' : 'All games. All free.'}</h2>
+          <span className="eyebrow">01 / CHOOSE YOUR ARENA</span>
+          <h2>{compact ? <>Four games. <span>Infinite rematches.</span></> : <>All games. <span>All free.</span></>}</h2>
           <p>A little friendly competition never hurt anyone.</p>
         </div>
-        <span className="game-total">{games.length} games · Endless rematches</span>
+        <span className="game-total"><Gamepad2 /> {games.length} original games · Endless rematches</span>
       </div>
 
       <div className="library-toolbar">
-        <div className="category-filters">
-          {['All games', 'Arcade', 'Trivia', 'Strategy', 'Racing'].map(c => (
-            <Button key={c} variant={c === category ? 'secondary' : 'ghost'} onClick={() => setCategory(c)}>
-              {c === 'All games' && <Gamepad2 />}
-              {c}
+        <div className="category-filters" aria-label="Filter games by category">
+          {['All games', 'Arcade', 'Trivia', 'Strategy', 'Racing'].map(item => (
+            <Button
+              key={item}
+              variant={item === category ? 'secondary' : 'ghost'}
+              aria-pressed={item === category}
+              onClick={() => setCategory(item)}
+            >
+              {item === 'All games' && <Gamepad2 />}
+              {item}
             </Button>
           ))}
         </div>
 
         <div className="search-field">
-          <Search size={16} />
-          <Input aria-label="Search games" placeholder="Find your game..." value={search} onChange={e => setSearch(e.target.value)} />
+          <Search size={17} />
+          <Input
+            aria-label="Search games"
+            placeholder="Find your game..."
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+          />
           {search && (
             <Button variant="ghost" size="icon" aria-label="Clear search" onClick={() => setSearch('')}>
               <X />
@@ -99,7 +124,9 @@ export function GameLibrary({ compact = false }: { compact?: boolean }) {
 
       {filtered.length ? (
         <div className="game-grid">
-          {filtered.map(game => <GameCard key={game.id} game={game} />)}
+          {filtered.map(game => (
+            <GameCard key={game.id} game={game} index={games.indexOf(game)} />
+          ))}
         </div>
       ) : (
         <div className="empty-state">
